@@ -10,6 +10,6 @@ Stuff to add:
  - Use XML parser to look through the HTML
  - Separate and organize the code into different classes
  - Add some settings:
-  - Select wanted resolution
-  - If you want to store the backgrounds
-  - Where to store the backgrounds
+   - Select wanted resolution
+   - If you want to store the backgrounds
+   - Where to store the backgrounds
