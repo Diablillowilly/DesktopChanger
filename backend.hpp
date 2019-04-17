@@ -8,11 +8,17 @@
 #include <QTextStream>
 #include <QFile>
 #include <QDir>
+
 #include <windows.h>
+
 #include <iostream> //cout/cin etc
 #include <string.h> //pra strings
 
 #include "httprequest.hpp"
+#include "filedownloader.hpp"
+
+#include <QStandardPaths>
+
 
 class Backend : public QObject
 {
@@ -20,39 +26,38 @@ class Backend : public QObject
 public:
     explicit Backend(QObject *parent = nullptr);
 
-    QNetworkAccessManager download_manager;
-    QNetworkReply *currentDownload;
-
-
-    void doDownload(const QUrl &url);
-    bool saveToDisk(const QString &filename, QIODevice *data);
-    static bool isHttpRedirect(QNetworkReply *reply);
 
 
 private:
 
+    QUrl myURL = QUrl("https://www.maerklin.de/de/service/multimedia/hintergrundbilder/hintergrundbilder");
+    QString tempFolder = "Desktop Changer";
+    QString tempFolderPath;
+
+    QString fileName = "filename.jpg";
+    QString filePath = "C:";
+    QString fullFilePath;
+
+
     httpRequest getWeb;
+    fileDownloader getFile;
 
-    QString filePath;
+
+    QUrl getDURL(QString webPage);
+    bool checkDURL(QString webPage);
+
+    bool setBackground();
 
 
-    void download(QString url);
-    const QString myURL = "https://www.maerklin.de/de/service/multimedia/hintergrundbilder/hintergrundbilder";
-    const QString myDURL = "https://www.maerklin.de";
 
 signals:
-    void finished();
-public slots:
-    void run();
-    void run2();
-    void run3();
     void close();
-
-
-    void downloadFinished(QNetworkReply *reply);
+public slots:
+    void start();
 
 private slots:
     void getReqFinished(QString answer);
+    void fileDownloadFinished();
 
 
 

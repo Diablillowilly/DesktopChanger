@@ -3,10 +3,9 @@
 httpRequest::httpRequest(QObject *parent): QObject(parent)
 {
 
- manager = new QNetworkAccessManager();
-
-    QObject::connect(manager, SIGNAL(finished(QNetworkReply*)),
+    QObject::connect(&manager, SIGNAL(finished(QNetworkReply*)),
                      this, SLOT(requestFinished(QNetworkReply*)));
+
 }
 
 
@@ -15,8 +14,7 @@ bool httpRequest::httpGet(QUrl url){
         return false;
 
     request.setUrl(QUrl(url));
-    manager->get(request);
-
+    manager.get(request);
     return true;
 }
 
@@ -32,13 +30,10 @@ QString httpRequest::getAnswer(){
 
 void httpRequest::requestFinished(QNetworkReply *reply) {
     if (reply->error()) {
-        qDebug() << reply->errorString();
+        qCritical() << reply->errorString();
         return;
     }
-
     answer = reply->readAll();
-
-    qDebug() << /*answer*/"bbbbbbbbbbbbbbbbbb";
-
     emit finished(answer);
 }
+

@@ -18,7 +18,7 @@ public:
     QString getAnswer();
 
 private:
-    QNetworkAccessManager *manager;
+    QNetworkAccessManager manager;
     QNetworkRequest request;
     QString answer;
 
