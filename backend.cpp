@@ -3,8 +3,8 @@
 Backend::Backend(QObject *parent) : QObject(parent)
 {
     qDebug("wwww");
-    manager = new QNetworkAccessManager();
-    QObject::connect(manager, &QNetworkAccessManager::finished,
+    // manager = new QNetworkAccessManager();
+    /*  QObject::connect(manager, &QNetworkAccessManager::finished,
                      this, [=](QNetworkReply *reply) {
         if (reply->error()) {
             qDebug() << reply->errorString();
@@ -16,13 +16,13 @@ Backend::Backend(QObject *parent) : QObject(parent)
         //qDebug() << "!"<<answer;
 
     }
-    );
+    );*/
 
-    QObject::connect(manager, SIGNAL(finished(QNetworkReply*)),
-                     this, SLOT(managerFinished(QNetworkReply*)));
+    QObject::connect(&getWeb, SIGNAL(finished(QString)),
+                     this, SLOT(getReqFinished(QString)));
 
     QObject::connect(&download_manager, SIGNAL(finished(QNetworkReply*)),
-            SLOT(downloadFinished(QNetworkReply*)));
+                     SLOT(downloadFinished(QNetworkReply*)));
 
 }
 void Backend::run(){
@@ -33,15 +33,17 @@ void Backend::run(){
 
 }
 void Backend::run2(){
+    qDebug()<<"run2";
 
-    request.setUrl(QUrl(myURL));
-    manager->get(request);
+    if(!getWeb.httpGet(QUrl(myURL)))
+        qDebug()<<"ERROR with the url";
+    qDebug()<<"request made";
 
 
 }
 void Backend::run3(){
     //qDebug() << answer;
-    qDebug() << answer.length();
+    /*  qDebug() << answer.length();
 
     QStringList list1 = answer.split("\n", QString::SkipEmptyParts );
     qDebug()<<"lines->" <<list1.size();
@@ -74,7 +76,7 @@ filePath = file_path;
     }
 
     file.close();
-
+*/
 }
 void Backend::close(){
 
@@ -82,37 +84,14 @@ void Backend::close(){
 
 
 }
-void Backend::managerFinished(QNetworkReply *reply) {
-    if (reply->error()) {
-        qDebug() << reply->errorString();
-        return;
-    }
-
-    QString answer = reply->readAll();
-
-    qDebug() << answer;
-}
 
 
-QString Backend::getDUrl(QString url){
-    QString response = myDURL;
 
-    QStringList list1 = url.split('"');
-    for(QString str : list1){
-        if(str.contains(".jpg")){
-            response+=str;
-            //qDebug() << response;
-        }
-    }
-
-    return response;
-
-}
 void Backend::download(QString DURL){
 
-qDebug() <<"Downloading:" <<DURL;
+    qDebug() <<"Downloading:" <<DURL;
     QNetworkRequest request(DURL);
-     currentDownload = download_manager.get(request);
+    currentDownload = download_manager.get(request);
 
 
 
@@ -123,7 +102,7 @@ bool Backend::isHttpRedirect(QNetworkReply *reply)
 {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     return statusCode == 301 || statusCode == 302 || statusCode == 303
-           || statusCode == 305 || statusCode == 307 || statusCode == 308;
+            || statusCode == 305 || statusCode == 307 || statusCode == 308;
 }
 
 
@@ -169,4 +148,8 @@ bool Backend::saveToDisk(const QString &filename, QIODevice *data)
     file.close();
 
     return true;
+}
+
+void Backend::getReqFinished(QString answer){
+    qDebug()<< answer;
 }

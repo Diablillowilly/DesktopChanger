@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
     QTimer::singleShot(1000, myBackend, SLOT(run2()));
 
 
-    QTimer::singleShot(3000, myBackend, SLOT(run3()));
-    QTimer::singleShot(15000, myBackend, SLOT(close()));
+    //QTimer::singleShot(3000, myBackend, SLOT(run3()));
+  //QTimer::singleShot(15000, myBackend, SLOT(close()));
 
 
     return a.exec();

@@ -17,7 +17,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-    backend.cpp
+    backend.cpp \
+    httprequest.cpp \
+    filedownloader.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -25,4 +27,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
-    backend.hpp
+    backend.hpp \
+    httprequest.hpp \
+    filedownloader.hpp
