@@ -8,8 +8,10 @@ To be executed every time your computer boots
 Stuff to add:
  - Make it check if it is a new month before doing anything
  - Use XML parser to look through the HTML
- - Separate and organize the code into different classes
  - Add some settings:
    - Select wanted resolution
    - If you want to store the backgrounds
    - Where to store the backgrounds
+   
+Stuff already done: 
+ - ~~Separate and organize the code into different classes~~
