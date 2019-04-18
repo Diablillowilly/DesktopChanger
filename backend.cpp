@@ -8,10 +8,9 @@ Backend::Backend(QObject *parent) : QObject(parent)
 
     filePath = tempFolderPath;
     fullFilePath = filePath + '/' + fileName;
-    qDebug()<<fileName;
-    qDebug()<<filePath;
-    qDebug()<<fullFilePath;
-    qDebug()<<tempFolderPath;
+    storedDateFilePath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder;
+
+    storedDateFileFullPath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder + '/' + storedDateFileName;
 
     QObject::connect(&getWeb, SIGNAL(finished(QString)),
                      this, SLOT(getReqFinished(QString)));
@@ -23,22 +22,73 @@ Backend::Backend(QObject *parent) : QObject(parent)
 
 void Backend::start(){
     qDebug() << "Starting";
-    QDir myTempDir;
 
-    if(myTempDir.exists(tempFolderPath)){
-        qDebug()<<"temporal directory already exists";
+    int currentMonth = QDate::currentDate().month();
+
+    //check for config dir
+    QDir myConfigDir;
+    if(myConfigDir.exists(storedDateFilePath)){
+        qDebug()<<"config directory already exists";
     }else{
-        qDebug()<<"temporal directory does not exist, creating directory";
-        if(myTempDir.mkdir(tempFolderPath)){
-            qDebug()<<"temporal directory created (" << tempFolderPath << ')';
+        qDebug()<<"config directory does not exist, creating directory";
+        if(myConfigDir.mkdir(storedDateFilePath)){
+            qDebug()<<"config directory created (" << storedDateFilePath << ')';
         }else{
-            qCritical()<<"Coudln't create directory: " << tempFolderPath;
+            qCritical()<<"Coudln't create directory: " << storedDateFilePath;
         }
     }
-    if(!getWeb.httpGet(QUrl(myURL)))
-        qDebug()<<"URL has something wring (void Backend::start())";
-    qDebug()<<"GET request done";
 
+    QFile file(storedDateFileFullPath);
+
+    if(!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Could not open "<< storedDateFileFullPath;
+
+
+    }else{
+
+        QTextStream in(&file);
+        QString lastStoredDate;
+        while(!in.atEnd()) {
+            lastStoredDate = in.readAll();
+        }
+        file.close();
+
+        if(lastStoredDate.toInt() != currentMonth){
+            qDebug()<<"Last stored month is different from current month; "
+                   << "updating background (Last stored month: "<< lastStoredDate << ")";
+
+
+
+            QDir myTempDir;
+            if(myTempDir.exists(tempFolderPath)){
+                qDebug()<<"temporal directory already exists";
+            }else{
+                qDebug()<<"temporal directory does not exist, creating directory";
+                if(myTempDir.mkdir(tempFolderPath)){
+                    qDebug()<<"temporal directory created (" << tempFolderPath << ')';
+                }else{
+                    qCritical()<<"Coudln't create directory: " << tempFolderPath;
+                }
+            }
+
+            if(!getWeb.httpGet(QUrl(myURL)))
+                qDebug()<<"URL has something wring (void Backend::start())";
+            qDebug()<<"GET request done";
+
+            if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                qDebug() << "Could not open "<< storedDateFileFullPath;
+
+            }else{
+                QTextStream out(&file);
+                out << currentMonth;
+                file.close();
+            }
+        }else{
+            qDebug()<<"Last stored month is same as current month; "
+                   << "(Last stored month: "<< lastStoredDate << ")";
+            emit close();
+        }
+    }
 
 }
 
@@ -113,13 +163,17 @@ bool Backend::setBackground(){
     qDebug() << "Background path: " << fullFilePath;
 
 #ifdef ENABLE_CHANGE_BACKGROUND
-   //attempt to remove the cast warning
-   // std::string foo = "var";
-   // PVOID new_cast = (PVOID)foo.c_str();
-   // PVOID old_cast = static_cast<PVOID>(foo.c_str());
+    //attempt to remove the cast warning
+    //std::string foo = "var";
+    //PVOID old_cast = (PVOID)foo.c_str();
+    //PVOID new_cast = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.toStdString().data()));
+    //PVOID new_cast_ = const_cast<void*>(fullFilePath.toStdString().data());
+    //char *test =  const_cast<char *>(foo.data());
+    //PVOID new_cast_ = reinterpret_cast<void *>(test);
+    //void* a = new_cast;
+    PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.toStdString().data()));
 
-
-    if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (PVOID)fullFilePath.toStdString().c_str(), SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
+    if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
         return true;
 
 #endif

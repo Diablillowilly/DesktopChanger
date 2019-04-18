@@ -8,6 +8,9 @@
 #include <QTextStream>
 #include <QFile>
 #include <QDir>
+#include <QDate>
+#include <QDateTime>
+#include <QStandardPaths>
 
 #include <windows.h>
 
@@ -17,7 +20,6 @@
 #include "httprequest.hpp"
 #include "filedownloader.hpp"
 
-#include <QStandardPaths>
 
 
 class Backend : public QObject
@@ -34,10 +36,13 @@ private:
     QString tempFolder = "Desktop Changer";
     QString tempFolderPath;
 
-    QString fileName = "filename.jpg";
+    QString fileName = "background.jpg";
     QString filePath = "C:";
     QString fullFilePath;
 
+    QString storedDateFileName = "lastDate.txt";
+    QString storedDateFilePath;
+    QString storedDateFileFullPath;
 
     httpRequest getWeb;
     fileDownloader getFile;
