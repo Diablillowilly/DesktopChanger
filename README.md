@@ -6,7 +6,6 @@ To be executed every time your computer boots
 
 
 Stuff to add:
- - Make it check if it is a new month before doing anything
  - Use XML parser to look through the HTML
  - Add some settings:
    - Select wanted resolution
@@ -15,3 +14,4 @@ Stuff to add:
    
 Stuff already done: 
  - ~~Separate and organize the code into different classes~~
+ - ~~Make it check if it is a new month before doing anything~~
