@@ -40,7 +40,7 @@ void Backend::start(){
 
     QFile file(storedDateFileFullPath);
 
-    if(!file.open(QIODevice::ReadOnly)) {
+    if(!file.open(QIODevice::ReadWrite)) {
         qDebug() << "Could not open "<< storedDateFileFullPath;
 
 
@@ -171,13 +171,27 @@ bool Backend::setBackground(){
     //char *test =  const_cast<char *>(foo.data());
     //PVOID new_cast_ = reinterpret_cast<void *>(test);
     //void* a = new_cast;
-    PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.toStdString().data()));
+    //PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.toStdString().c_str()));
+    //PVOID fullFilePathCasted = fullFilePath.toStdString().data();
+    //int return_value = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*)"C:/Users/Willy/AppData/Local/Temp/Desktop Changer/background.jpg", SPIF_UPDATEINIFILE);
+    //qDebug() <<SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,(PVOID)"F:/Imagenes/121357.jpg", SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
 
-    if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
-        return true;
+    //if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,(PVOID)"F:/Imagenes/121357.jpg", SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
+       // return true;
+   /* std::string fullFilePath = "F:/Imagenes/rwby_black_wallpaper.jpg";
+    PVOID fullFilePathCasted_ = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.c_str()));
+    LPWSTR test = L"F:/Imagenes/121357.jpg";
 
+    int result = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, test, SPIF_UPDATEINIFILE);
+    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,fullFilePathCasted_,*//* SPIF_SENDWININICHANGE |*//* SPIF_UPDATEINIFILE);
+
+    */
+    //bool ret = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
+
+    PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.utf16()));
+       if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
+            return true;
 #endif
 
     return false;
 }
-
