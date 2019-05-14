@@ -12,6 +12,8 @@
 #include <QDateTime>
 #include <QStandardPaths>
 
+#include <QSettings>
+
 #include <windows.h>
 
 #include <iostream> //cout/cin etc
@@ -35,15 +37,45 @@ private:
 
     const QUrl myURL = QUrl("https://www.maerklin.de/de/service/multimedia/hintergrundbilder/hintergrundbilder");
     const QString tempFolder = "Desktop Changer";
-    QString tempFolderPath;
+    //QString tempFolderPath;
 
-    const QString fileName = "background.jpg";
-    QString filePath = "C:";
+QString final_download_path;
+
+    QString fileName = "background.jpg";
+
+    //path to folder containing file
+    QString filePath;
+
+    //path to file
     QString fullFilePath;
 
-    const QString storedDateFileName = "lastDate.txt";
+    /*const QString storedDateFileName = "lastDate.txt";
     QString storedDateFilePath;
-    QString storedDateFileFullPath;
+    QString storedDateFileFullPath;*/
+
+    const QString storedConfig = "config.txt";
+    //path to folder containing file
+    QString storedConfigFilePath;
+    //path to file
+    QString storedConfigFileFullPath;
+
+    static const int available_res_num = 6;
+    const QString available_res[available_res_num] = {"1024 x 768","1280 x 1024","1280 x 800","1366 x 768","1680 x 1050", "1920 x 1080"};
+
+
+    const QString res_key = "resolution";
+    const QString res_def_value = "5";
+    const QString store_backgrounds_key = "store_backgrounds";
+    const QString store_backgrounds_def_value = "false";
+    const QString store_backgrounds_path_key = "stored_backgrounds_path";
+    const QString store_backgrounds_path_def_value = "";
+
+
+    const QString last_date_key = "Cache/last_date";
+    const QString last_res_key = "Cache/last_resolution";
+    const QString last_store_backgrounds_key = "Cache/last_store_backgrounds";
+    const QString last_store_backgrounds_path_key = "Cache/last_store_backgrounds_path";
+
 
     httpRequest getWeb;
     fileDownloader getFile;
@@ -59,10 +91,11 @@ private:
 
     bool setBackground();
 
+    /*
     QString getLastStoredDate();
     bool setStoredDate(QString newDate);
     bool checkForFile();
-    bool createPath();
+    bool createPath();*/
 
 
 

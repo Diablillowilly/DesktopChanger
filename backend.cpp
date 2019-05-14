@@ -4,13 +4,45 @@
 
 Backend::Backend(QObject *parent) : QObject(parent)
 {
-    tempFolderPath = QDir::tempPath() + '/' + tempFolder;
+    //this is the date as found in the marklin webpage: "monthInGerman year"
+    currentDateMarklinFormat = germanMonths[QDate::currentDate().month() - 1] + ' ' + QString::number(QDate::currentDate().year());
+
+
+    //storedDateFileFullPath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder + '/' + storedDateFileName;
+
+    storedConfigFilePath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder;
+    storedConfigFileFullPath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder + '/' + storedConfig;
+
+
+    //initialize settings and assign default values
+    QSettings settings(storedConfigFileFullPath, QSettings::IniFormat);
+
+
+    if(!settings.contains(res_key)){
+        settings.setValue(res_key, res_def_value);
+    }
+    if(!settings.contains(store_backgrounds_key)){
+        settings.setValue(store_backgrounds_key, store_backgrounds_def_value);
+    }
+    if(!settings.contains(store_backgrounds_path_key)){
+        settings.setValue(store_backgrounds_path_key, store_backgrounds_path_def_value);
+    }
+    //settings.sync();
+    //qDebug() << settings.fileName();
+
+
+
+    QString tempFolderPath = QDir::tempPath() + '/' + tempFolder;
 
     filePath = tempFolderPath;
+    fileName = QString::number(QDate::currentDate().year()) + ' ' + germanMonths[QDate::currentDate().month() - 1] + ' ' + available_res[settings.value(res_key).toInt()] + ".jpg";
     fullFilePath = filePath + '/' + fileName;
-    storedDateFilePath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder;
+    //storedDateFilePath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder;
 
-    storedDateFileFullPath = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + '/' + tempFolder + '/' + storedDateFileName;
+
+
+
+
 
     QObject::connect(&getWeb, SIGNAL(finished(QString)),
                      this, SLOT(getReqFinished(QString)));
@@ -18,34 +50,50 @@ Backend::Backend(QObject *parent) : QObject(parent)
     QObject::connect(&getFile, SIGNAL(finished()),
                      this, SLOT(fileDownloadFinished()));
 
-    //this is the date as found in the marklin webpage: "monthInGerman year"
-    currentDateMarklinFormat = germanMonths[QDate::currentDate().month() - 1] + ' ' + QString::number(QDate::currentDate().year());
 
 
 }
 
 void Backend::start(){
+    QSettings settings(storedConfigFileFullPath, QSettings::IniFormat);
     qDebug() << "Starting";
 
 
 
 
-
     //check for config dir
-    if(!createPath()){
+    /* if(!createPath()){
         emit close();
+    }*/
+
+
+
+    if(settings.value(last_date_key).toString() == currentDateMarklinFormat && settings.value(last_res_key).toString() == settings.value(res_key).toString() &&  settings.value(last_store_backgrounds_key).toString() == settings.value(store_backgrounds_key).toString() &&  settings.value(store_backgrounds_path_key).toString() == settings.value(last_store_backgrounds_path_key).toString()){
+        qDebug()<<"Last stored data is the same as current data; "
+               << "(Last stored month: "<< settings.value(last_date_key).toString() << ")"
+               << "(Last stored res: "<< settings.value(last_res_key).toString() << ")"
+               << "(Last stored res: "<< settings.value(last_store_backgrounds_key).toString() << ")"
+               << "(Last stored res: "<< settings.value(last_store_backgrounds_path_key).toString() << ")";
+        emit close();
+        return;
     }
+    /*
+    qDebug()<<settings.value(last_date_key).toString();
+    qDebug()<<currentDateMarklinFormat;
+    qDebug()<<settings.value(last_res_key).toString();
+    qDebug()<<settings.value(res_key).toString();
+    qDebug()<<settings.value(last_store_backgrounds_key).toString();
+    qDebug()<<settings.value(store_backgrounds_key).toString();
+    qDebug()<<"------------------------------------------------";
+    bool test = settings.value(last_date_key).toString() == currentDateMarklinFormat;
+    qDebug()<< test;
+    test = settings.value(last_res_key).toString() == settings.value(res_key).toString();
+    qDebug()<< test;
+    test = settings.value(last_store_backgrounds_key).toString() == settings.value(store_backgrounds_key).toString();
+    qDebug()<< test;
+    */
 
-
-
-    if(checkForFile()){
-        if(getLastStoredDate() == currentDateMarklinFormat){
-            qDebug()<<"Last stored month is the same as current month; "
-                   << "(Last stored month: "<< currentDateMarklinFormat << ")";
-            emit close();
-        }
-    }
-    qDebug()<< "Stored date, which only changes on successfull desktop change, is different from the current date, or the file where the date is stored doesn't exist";
+    qDebug()<< "Stored date or stored res, which only changes on successfull desktop change, is different from the current date or res";
 
 
 
@@ -168,7 +216,7 @@ bool Backend::checkDURL(QString webPage){
 
 
 void Backend::getReqFinished(QString answer){
-
+    QSettings settings(storedConfigFileFullPath, QSettings::IniFormat);
     myWebparse.setWebPage(answer);
     if(!myWebparse.parse_web_page()){
         qCritical() << "error parsing webpage";
@@ -176,52 +224,51 @@ void Backend::getReqFinished(QString answer){
     }
 
     QString Base_URL = myURL.scheme() + "://" + myURL.host();
-    QUrl myDUrl = Base_URL + myWebparse.getDatehResURL();
+    QUrl myDUrl = Base_URL + myWebparse.getDateResURL(0, settings.value(res_key).toInt());
 
 
 
-    //if the current date is different from the last retrieved from the website,
+    //if the current date or res is different from the last retrieved from the website,
     //it means that the website hasnt updated yet the background, or that they have posted it too soon,
     //anyway, there is nothing to do
     if(myWebparse.getDate() == currentDateMarklinFormat){
+
         qDebug() << "Stored and current date is the same as the webpage date; starting http req";
 
-        getFile.download(myDUrl,fileName,filePath);
+        if(settings.value(store_backgrounds_key).toString() == "true"){
+            // if(settings.value(store_backgrounds_path_key).toString().)
+            final_download_path = settings.value(store_backgrounds_path_key).toString();
+            qDebug() << "true " << final_download_path;
+        }else if (settings.value(store_backgrounds_key).toString() == "false"){
+            final_download_path = filePath;
+        }else{
+            qCritical() << "settings are wrong, store_backgrounds_key, is not neither true nor false (void Backend::getReqFinished(QString answer))";
+            emit close();
+        }
+        getFile.download(myDUrl,fileName,final_download_path);
     }else{
         qDebug() << "Stored and current date is different from the webpage date";
         emit close();
     }
-
-
-
-
-
-
-
-
-
-
-
-
 }
+
 void Backend::fileDownloadFinished(){
+    QSettings settings(storedConfigFileFullPath, QSettings::IniFormat);
     if(!setBackground()){
         qCritical()<<"could not set background";
     }else{
         qDebug()<<"correctly set background";
 
         qDebug()<<"Updating stored date";
-        if(setStoredDate(currentDateMarklinFormat)){
-            qDebug()<<"Successfully updated date";
-        }else{
-            qCritical()<<"could not update date";
-        }
+        settings.setValue(last_date_key, currentDateMarklinFormat);
+        settings.setValue(last_res_key, settings.value(res_key).toString());
+        settings.setValue(last_store_backgrounds_key, settings.value(store_backgrounds_key).toString());
+        settings.setValue(last_store_backgrounds_path_key, settings.value(store_backgrounds_path_key).toString());
     }
     emit close();
 }
 
 bool Backend::setBackground(){
-    qDebug() << "Background path: " << fullFilePath;
 
 #ifdef ENABLE_CHANGE_BACKGROUND
     //attempt to remove the cast warning
@@ -249,7 +296,11 @@ bool Backend::setBackground(){
     */
     //bool ret = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
 
-    PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.utf16()));
+
+    QString full_final_download_path = final_download_path + '/' + fileName;
+    qDebug() << "Final download path: " << full_final_download_path;
+
+    PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(full_final_download_path.utf16()));
     if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
         return true;
 #endif
@@ -257,7 +308,7 @@ bool Backend::setBackground(){
     return false;
 }
 
-
+/*
 QString Backend::getLastStoredDate(){
     QFile file(storedDateFileFullPath);
 
@@ -314,3 +365,4 @@ bool Backend::createPath(){
 
     return true;
 }
+*/
