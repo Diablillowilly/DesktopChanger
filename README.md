@@ -6,12 +6,12 @@ To be executed every time your computer boots
 
 
 Stuff to add:
- - Use XML parser to look through the HTML
  - Add some settings:
    - Select wanted resolution
    - If you want to store the backgrounds
    - Where to store the backgrounds
    
 Stuff already done: 
+ - ~~Use XML parser to look through the HTML (made own parser)~~
  - ~~Separate and organize the code into different classes~~
  - ~~Make it check if it is a new month before doing anything~~

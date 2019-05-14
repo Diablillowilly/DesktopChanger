@@ -19,6 +19,7 @@
 
 #include "httprequest.hpp"
 #include "filedownloader.hpp"
+#include "parser.hpp"
 
 
 
@@ -32,26 +33,36 @@ public:
 
 private:
 
-    QUrl myURL = QUrl("https://www.maerklin.de/de/service/multimedia/hintergrundbilder/hintergrundbilder");
-    QString tempFolder = "Desktop Changer";
+    const QUrl myURL = QUrl("https://www.maerklin.de/de/service/multimedia/hintergrundbilder/hintergrundbilder");
+    const QString tempFolder = "Desktop Changer";
     QString tempFolderPath;
 
-    QString fileName = "background.jpg";
+    const QString fileName = "background.jpg";
     QString filePath = "C:";
     QString fullFilePath;
 
-    QString storedDateFileName = "lastDate.txt";
+    const QString storedDateFileName = "lastDate.txt";
     QString storedDateFilePath;
     QString storedDateFileFullPath;
 
     httpRequest getWeb;
     fileDownloader getFile;
+    parser myWebparse;
 
+    const QString germanMonths[12] = {"Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"};
+
+    //this is the date as found in the marklin webpage: "monthInGerman year"
+    QString currentDateMarklinFormat;
 
     QUrl getDURL(QString webPage);
     bool checkDURL(QString webPage);
 
     bool setBackground();
+
+    QString getLastStoredDate();
+    bool setStoredDate(QString newDate);
+    bool checkForFile();
+    bool createPath();
 
 
 

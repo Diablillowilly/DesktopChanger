@@ -18,25 +18,45 @@ Backend::Backend(QObject *parent) : QObject(parent)
     QObject::connect(&getFile, SIGNAL(finished()),
                      this, SLOT(fileDownloadFinished()));
 
+    //this is the date as found in the marklin webpage: "monthInGerman year"
+    currentDateMarklinFormat = germanMonths[QDate::currentDate().month() - 1] + ' ' + QString::number(QDate::currentDate().year());
+
+
 }
 
 void Backend::start(){
     qDebug() << "Starting";
 
-    int currentMonth = QDate::currentDate().month();
+
+
+
 
     //check for config dir
-    QDir myConfigDir;
-    if(myConfigDir.exists(storedDateFilePath)){
-        qDebug()<<"config directory already exists";
-    }else{
-        qDebug()<<"config directory does not exist, creating directory";
-        if(myConfigDir.mkdir(storedDateFilePath)){
-            qDebug()<<"config directory created (" << storedDateFilePath << ')';
-        }else{
-            qCritical()<<"Coudln't create directory: " << storedDateFilePath;
+    if(!createPath()){
+        emit close();
+    }
+
+
+
+    if(checkForFile()){
+        if(getLastStoredDate() == currentDateMarklinFormat){
+            qDebug()<<"Last stored month is the same as current month; "
+                   << "(Last stored month: "<< currentDateMarklinFormat << ")";
+            emit close();
         }
     }
+    qDebug()<< "Stored date, which only changes on successfull desktop change, is different from the current date, or the file where the date is stored doesn't exist";
+
+
+
+
+    if(!getWeb.httpGet(QUrl(myURL)))
+        qDebug()<<"URL has something wrong (void Backend::start())";
+
+    qDebug()<<"GET request done";
+
+
+    /*
 
     QFile file(storedDateFileFullPath);
 
@@ -89,10 +109,18 @@ void Backend::start(){
             emit close();
         }
     }
+*/
+
+
 
 }
 
+
+/*
 QUrl Backend::getDURL(QString webPage){
+
+
+
 
     QStringList list = webPage.split("\n", QString::SkipEmptyParts );
 
@@ -135,18 +163,44 @@ bool Backend::checkDURL(QString webPage){
         }
     }
     return false;
-}
+}*/
+
 
 
 void Backend::getReqFinished(QString answer){
-    if(checkDURL(answer)){
 
-        QUrl myDUrl = getDURL(answer);
-        getFile.download(myDUrl,fileName,filePath);
-    }else{
-        qCritical() << "Could not find any download link";
+    myWebparse.setWebPage(answer);
+    if(!myWebparse.parse_web_page()){
+        qCritical() << "error parsing webpage";
         emit close();
     }
+
+    QString Base_URL = myURL.scheme() + "://" + myURL.host();
+    QUrl myDUrl = Base_URL + myWebparse.getDatehResURL();
+
+
+
+    //if the current date is different from the last retrieved from the website,
+    //it means that the website hasnt updated yet the background, or that they have posted it too soon,
+    //anyway, there is nothing to do
+    if(myWebparse.getDate() == currentDateMarklinFormat){
+        qDebug() << "Stored and current date is the same as the webpage date; starting http req";
+
+        getFile.download(myDUrl,fileName,filePath);
+    }else{
+        qDebug() << "Stored and current date is different from the webpage date";
+        emit close();
+    }
+
+
+
+
+
+
+
+
+
+
 
 
 }
@@ -155,6 +209,13 @@ void Backend::fileDownloadFinished(){
         qCritical()<<"could not set background";
     }else{
         qDebug()<<"correctly set background";
+
+        qDebug()<<"Updating stored date";
+        if(setStoredDate(currentDateMarklinFormat)){
+            qDebug()<<"Successfully updated date";
+        }else{
+            qCritical()<<"could not update date";
+        }
     }
     emit close();
 }
@@ -177,8 +238,8 @@ bool Backend::setBackground(){
     //qDebug() <<SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,(PVOID)"F:/Imagenes/121357.jpg", SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
 
     //if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0,(PVOID)"F:/Imagenes/121357.jpg", SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
-       // return true;
-   /* std::string fullFilePath = "F:/Imagenes/rwby_black_wallpaper.jpg";
+    // return true;
+    /* std::string fullFilePath = "F:/Imagenes/rwby_black_wallpaper.jpg";
     PVOID fullFilePathCasted_ = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.c_str()));
     LPWSTR test = L"F:/Imagenes/121357.jpg";
 
@@ -189,9 +250,67 @@ bool Backend::setBackground(){
     //bool ret = SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE);
 
     PVOID fullFilePathCasted = const_cast<void*>(reinterpret_cast<const void*>(fullFilePath.utf16()));
-       if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
-            return true;
+    if(SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, fullFilePathCasted, SPIF_SENDWININICHANGE | SPIF_UPDATEINIFILE))
+        return true;
 #endif
 
     return false;
+}
+
+
+QString Backend::getLastStoredDate(){
+    QFile file(storedDateFileFullPath);
+
+    QString lastStoredDate;
+
+    if(!file.open(QIODevice::ReadWrite)) {
+        qDebug() << "Could not open "<< storedDateFileFullPath;
+
+
+    }else{
+
+        QTextStream in(&file);
+        while(!in.atEnd()) {
+            lastStoredDate = in.readAll();
+        }
+        file.close();
+    }
+    return lastStoredDate;
+}
+
+bool Backend::setStoredDate(QString newDate){
+    QFile file(storedDateFileFullPath);
+
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qCritical() << "Could not open "<< storedDateFileFullPath;
+        return false;
+    }else{
+        QTextStream out(&file);
+        out << newDate;
+        file.close();
+    }
+    return true;
+}
+
+bool Backend::checkForFile(){
+    QFile file(storedDateFileFullPath);
+    return file.exists();
+}
+
+bool Backend::createPath(){
+
+    QDir myConfigDir;
+    if(myConfigDir.exists(storedDateFilePath)){
+        qDebug()<<"config directory already exists";
+    }else{
+        qDebug()<<"config directory does not exist, creating directory";
+        if(myConfigDir.mkdir(storedDateFilePath)){
+            qDebug()<<"config directory created (" << storedDateFilePath << ')';
+        }else{
+            qCritical()<<"Coudln't create directory: " << storedDateFilePath;
+            return false;
+        }
+    }
+
+    return true;
 }

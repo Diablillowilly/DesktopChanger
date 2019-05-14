@@ -19,7 +19,8 @@ SOURCES += \
         main.cpp \
     backend.cpp \
     httprequest.cpp \
-    filedownloader.cpp
+    filedownloader.cpp \
+    parser.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -29,4 +30,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     backend.hpp \
     httprequest.hpp \
-    filedownloader.hpp
+    filedownloader.hpp \
+    parser.hpp
