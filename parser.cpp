@@ -12,7 +12,7 @@ QString parser::getDate(int date_num){
     return last_dates[date_num];
 }
 
-QString parser::getDatehResURL(int date_num, int res){ //should go from 0 to 5
+QString parser::getDateResURL(int date_num, int res){ //should go from 0 to 5
     if(res<0 || res > 5){
         qCritical() << "Invalid resolution selected (QString parser::getLastMonthRes(int res))";
         return "";

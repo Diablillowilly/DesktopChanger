@@ -17,7 +17,7 @@ public:
     void setWebPage(QString webPage_);
 
     QString getDate(int date_num = 0);
-    QString getDatehResURL(int date_num = 0, int res = 5); //should go from 0 to 5, from lower to bigger res
+    QString getDateResURL(int date_num = 0, int res = 5); //should go from 0 to 5, from lower to bigger res
 
 
 
