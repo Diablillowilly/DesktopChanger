@@ -4,6 +4,8 @@ QT += core network
 CONFIG += c++17 console
 CONFIG -= app_bundle
 
+RC_ICONS = dc.ico
+
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -32,3 +34,7 @@ HEADERS += \
     httprequest.hpp \
     filedownloader.hpp \
     parser.hpp
+
+DISTFILES += \
+    dc.ico
+
