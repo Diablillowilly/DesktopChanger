@@ -19,7 +19,7 @@ public:
     QNetworkReply *currentDownload;
 
 
-    void download(QUrl url,QString fileName, QString filePath);
+    void download(QUrl url,QString fileName, QString filePath,bool store_background = false);
     bool saveToDisk(QIODevice *data);
     //static bool isHttpRedirect(QNetworkReply *reply);
 
@@ -29,10 +29,12 @@ private:
     QString fileName;
     QString fullFilePath;
 
+    bool just_store_background;
+
     const QString myDURL = "https://www.maerklin.de";
 
 signals:
-void finished();
+void finished(bool store_background);
 
 public slots:
     void downloadFinished(QNetworkReply *reply);

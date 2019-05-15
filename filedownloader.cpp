@@ -9,10 +9,11 @@ fileDownloader::fileDownloader(QObject *parent) : QObject(parent)
 
 
 
-void fileDownloader::download(QUrl DURL,QString newFileName, QString newFilePath){
+void fileDownloader::download(QUrl DURL,QString newFileName, QString newFilePath,bool store_background){
     filePath=newFilePath;
     fileName=newFileName;
     fullFilePath = filePath + '/' + fileName;
+    just_store_background = store_background;
     QNetworkRequest request(DURL);
     currentDownload = download_manager.get(request);
     qDebug() <<"Downloading: " << DURL.fileName();
@@ -53,7 +54,7 @@ void fileDownloader::downloadFinished(QNetworkReply *reply)
 
 
 
-    emit finished();
+    emit finished(just_store_background);
 }
 
 bool fileDownloader::saveToDisk(QIODevice *data)

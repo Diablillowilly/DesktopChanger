@@ -39,7 +39,7 @@ private:
     const QString tempFolder = "Desktop Changer";
     //QString tempFolderPath;
 
-QString final_download_path;
+    QString final_download_path;
 
     QString fileName = "background.jpg";
 
@@ -59,6 +59,9 @@ QString final_download_path;
     //path to file
     QString storedConfigFileFullPath;
 
+    QUrl background_cleaned_DURL;
+    QString background_cleaned_file_name;
+
     static const int available_res_num = 6;
     const QString available_res[available_res_num] = {"1024 x 768","1280 x 1024","1280 x 800","1366 x 768","1680 x 1050", "1920 x 1080"};
 
@@ -69,6 +72,8 @@ QString final_download_path;
     const QString store_backgrounds_def_value = "false";
     const QString store_backgrounds_path_key = "stored_backgrounds_path";
     const QString store_backgrounds_path_def_value = "";
+    const QString download_cleaned_backgrounds_key = "download_cleaned_backgrounds";
+    const QString download_cleaned_backgrounds_def_value = "false";
 
 
     const QString last_date_key = "Cache/last_date";
@@ -76,6 +81,12 @@ QString final_download_path;
     const QString last_store_backgrounds_key = "Cache/last_store_backgrounds";
     const QString last_store_backgrounds_path_key = "Cache/last_store_backgrounds_path";
 
+    const QString last_download_cleaned_backgrounds_path_key = "Cache/last_download_cleaned_backgrounds";
+
+    const QString cleaned_background_terminator = "_b";
+
+    bool has_finished_download_background = false;
+    bool has_finished_download_background_cleaned = false;
 
     httpRequest getWeb;
     fileDownloader getFile;
@@ -106,7 +117,7 @@ public slots:
 
 private slots:
     void getReqFinished(QString answer);
-    void fileDownloadFinished();
+    void fileDownloadFinished(bool store_background = false);
 
 
 

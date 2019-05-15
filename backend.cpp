@@ -27,6 +27,9 @@ Backend::Backend(QObject *parent) : QObject(parent)
     if(!settings.contains(store_backgrounds_path_key)){
         settings.setValue(store_backgrounds_path_key, store_backgrounds_path_def_value);
     }
+    if(!settings.contains(download_cleaned_backgrounds_key)){
+        settings.setValue(download_cleaned_backgrounds_key, download_cleaned_backgrounds_def_value );
+    }
     //settings.sync();
     //qDebug() << settings.fileName();
 
@@ -47,8 +50,8 @@ Backend::Backend(QObject *parent) : QObject(parent)
     QObject::connect(&getWeb, SIGNAL(finished(QString)),
                      this, SLOT(getReqFinished(QString)));
 
-    QObject::connect(&getFile, SIGNAL(finished()),
-                     this, SLOT(fileDownloadFinished()));
+    QObject::connect(&getFile, SIGNAL(finished(bool)),
+                     this, SLOT(fileDownloadFinished(bool)));
 
 
 
@@ -68,7 +71,7 @@ void Backend::start(){
 
 
 
-    if(settings.value(last_date_key).toString() == currentDateMarklinFormat && settings.value(last_res_key).toString() == settings.value(res_key).toString() &&  settings.value(last_store_backgrounds_key).toString() == settings.value(store_backgrounds_key).toString() &&  settings.value(store_backgrounds_path_key).toString() == settings.value(last_store_backgrounds_path_key).toString()){
+    if(settings.value(last_date_key).toString() == currentDateMarklinFormat && settings.value(last_res_key).toString() == settings.value(res_key).toString() &&  settings.value(last_store_backgrounds_key).toString() == settings.value(store_backgrounds_key).toString() &&  settings.value(last_store_backgrounds_path_key).toString() == settings.value(store_backgrounds_path_key).toString()&&  settings.value(last_download_cleaned_backgrounds_path_key).toString() == settings.value(download_cleaned_backgrounds_key).toString()){
         qDebug()<<"Last stored data is the same as current data; "
                << "(Last stored month: "<< settings.value(last_date_key).toString() << ")"
                << "(Last stored res: "<< settings.value(last_res_key).toString() << ")"
@@ -227,13 +230,15 @@ void Backend::getReqFinished(QString answer){
     QUrl myDUrl = Base_URL + myWebparse.getDateResURL(0, settings.value(res_key).toInt());
 
 
-
     //if the current date or res is different from the last retrieved from the website,
     //it means that the website hasnt updated yet the background, or that they have posted it too soon,
     //anyway, there is nothing to do
     if(myWebparse.getDate() == currentDateMarklinFormat){
 
         qDebug() << "Stored and current date is the same as the webpage date; starting http req";
+
+
+
 
         if(settings.value(store_backgrounds_key).toString() == "true"){
             // if(settings.value(store_backgrounds_path_key).toString().)
@@ -245,27 +250,99 @@ void Backend::getReqFinished(QString answer){
             qCritical() << "settings are wrong, store_backgrounds_key, is not neither true nor false (void Backend::getReqFinished(QString answer))";
             emit close();
         }
+        qDebug()<< "downloading backgorund url"<<myDUrl;
+        qDebug()<< "downloading backgorund fileName"<<fileName;
+        qDebug()<< "downloading backgorund final_download_path"<<final_download_path;
         getFile.download(myDUrl,fileName,final_download_path);
+
+
+
+
+        if(settings.value(download_cleaned_backgrounds_key).toString() == "true"){
+            myDUrl = Base_URL + myWebparse.getDateResURL(1, settings.value(res_key).toInt());
+            //generate previous month date
+            QString fileDate = myWebparse.getDate(1);
+            QString newFileDate;
+            QStringList subList = fileDate.split(' ');
+            for(QString str : subList){
+
+                QRegExp re("\\d*");  // a digit (\d), zero or more times (*)
+                if (re.exactMatch(str)){//its the year
+                    newFileDate.prepend(str);
+                }else{
+                    newFileDate.append(' ' + str);
+                }
+            }
+            newFileDate.append(' ' + available_res[settings.value(res_key).toInt()]  + cleaned_background_terminator + ".jpg");
+            //qDebug()<< "newfilename ------ " <<  newFileDate;
+
+
+            background_cleaned_file_name = newFileDate;
+
+            background_cleaned_DURL = myDUrl;
+
+            // getFile.download(myDUrl,newFileDate,final_download_path, true);
+        }else if (settings.value(download_cleaned_backgrounds_key).toString() == "false"){
+            //myDUrl = Base_URL + myWebparse.getDateResURL(1, settings.value(res_key).toInt());
+            //getFile.download(myDUrl,fileName,final_download_path, true);
+        }else{
+            qCritical() << "settings are wrong, download_cleaned_backgrounds_key, is not neither true nor false (void Backend::getReqFinished(QString answer))";
+            emit close();
+        }
+
     }else{
         qDebug() << "Stored and current date is different from the webpage date";
         emit close();
     }
 }
 
-void Backend::fileDownloadFinished(){
+void Backend::fileDownloadFinished(bool store_background){
     QSettings settings(storedConfigFileFullPath, QSettings::IniFormat);
-    if(!setBackground()){
-        qCritical()<<"could not set background";
-    }else{
-        qDebug()<<"correctly set background";
 
-        qDebug()<<"Updating stored date";
-        settings.setValue(last_date_key, currentDateMarklinFormat);
-        settings.setValue(last_res_key, settings.value(res_key).toString());
-        settings.setValue(last_store_backgrounds_key, settings.value(store_backgrounds_key).toString());
-        settings.setValue(last_store_backgrounds_path_key, settings.value(store_backgrounds_path_key).toString());
+    qDebug()<< "starting fileDownloadFinished()>"<< store_background;
+
+    if(store_background){
+        qDebug()<<"Correctly downloaded cleaned background";
+
+        qDebug()<<"Updating stored date (store_background)";
+        //settings.setValue(last_date_key, currentDateMarklinFormat);
+        //settings.setValue(last_res_key, settings.value(res_key).toString());
+        //settings.setValue(last_store_backgrounds_key, settings.value(store_backgrounds_key).toString());
+        settings.setValue(last_download_cleaned_backgrounds_path_key, settings.value(download_cleaned_backgrounds_key).toString());
+
+        has_finished_download_background_cleaned = true;
+    }else{
+        if(!setBackground()){
+            qCritical()<<"Could not set background";
+        }else{
+            qDebug()<<"Correctly set background";
+
+            qDebug()<<"Updating stored date";
+            settings.setValue(last_date_key, currentDateMarklinFormat);
+            settings.setValue(last_res_key, settings.value(res_key).toString());
+            settings.setValue(last_store_backgrounds_key, settings.value(store_backgrounds_key).toString());
+            settings.setValue(last_download_cleaned_backgrounds_path_key, settings.value(download_cleaned_backgrounds_key).toString());
+
+
+
+
+
+        }
+
+        has_finished_download_background = true;
+
+        //if first download has finished; start the second one
+        if(settings.value(download_cleaned_backgrounds_key).toString() == "true"){
+            getFile.download(background_cleaned_DURL,background_cleaned_file_name,final_download_path, true);
+        }
     }
-    emit close();
+
+
+    if(settings.value(download_cleaned_backgrounds_key).toString() == "true" && has_finished_download_background == true && has_finished_download_background_cleaned == true ){
+        emit close();
+    }else if(settings.value(download_cleaned_backgrounds_key).toString() == "false" && has_finished_download_background == true){
+        emit close();
+    }
 }
 
 bool Backend::setBackground(){

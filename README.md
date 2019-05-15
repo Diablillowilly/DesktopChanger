@@ -6,9 +6,11 @@ To be executed every time your computer boots
 
 
 Stuff to add:
- - Posibility to redownload past month wallpaper, which will have the calendar removed
+ - Refactor the code
+ 
  
 Stuff already done:
+ - ~~Posibility to redownload past month wallpaper, which will have the calendar removed~~
  - ~~Use XML parser to look through the HTML (made own parser)~~
  - ~~Separate and organize the code into different classes~~
  - ~~Make it check if it is a new month before doing anything~~
